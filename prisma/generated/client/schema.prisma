@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  Active  @map("active")
+  Blocked @map("blocked")
+
+  @@map("user_status")
+}
+
+//MODULES
+model User {
+  id            Int        @id @default(autoincrement())
+  name          String
+  profileImage  String?    @map("profile_image") // Optional field
+  email         String     @unique
+  mobile        String     @unique
+  password      String
+  address       String?
+  dateOfBirth   DateTime?  @map("date_of_birth")
+  gender        String?
+  nationality   String?
+  maritalStatus String?
+  govtId        String?
+  status        UserStatus @default(Active)
+  role          String?
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  accounts UserAccount[]
+
+  @@map("user")
+}
+
+model UserAccount {
+  id            Int      @id @default(autoincrement()) @map("account_id")
+  accountNumber String   @unique @map("account_number")
+  accountType   String   @map("account_type")
+  userId        Int      @map("user_id")
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  transactions Transaction[]
+  balance      Balance?
+
+  @@map("user_account")
+}
+
+model Transaction {
+  id        Int         @id @default(autoincrement())
+  date      DateTime    @default(now()) @map("transaction_date")
+  amount    Int         @map("transaction_amount")
+  type      String      @map("transaction_type") // e.g., deposit, withdraw, transfer
+  accountId Int         @map("account_id")
+  account   UserAccount @relation(fields: [accountId], references: [id])
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  @@map("transaction")
+}
+
+model Balance {
+  id        Int         @id @default(autoincrement())
+  balance   Int         @map("current_balance")
+  accountId Int         @unique @map("account_id")
+  account   UserAccount @relation(fields: [accountId], references: [id])
+
+  @@map("balance")
+}
+
+model Admin {
+  id           Int        @id @default(autoincrement())
+  name         String
+  profileImage String?    @map("profile_image") // Optional field
+  email        String     @unique
+  mobile       String     @unique
+  password     String
+  address      String?
+  status       UserStatus @default(Active)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@map("admin")
+}
